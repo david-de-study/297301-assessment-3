@@ -163,8 +163,7 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
                 {'Method': 'ML Prediction', 'Forecast (Units)': int( st.session_state.ml_forecast)}
             ])
             
-            graph = st.bar_chart(result_df, x='Method', y='Forecast (Units)')
-            graph.update_layout(xaxis = dict(tickangle = 90))
+            st.bar_chart(result_df, x='Method', y='Forecast (Units)')
             
             # Business Analysis
             st.success("✅ Forecast generated successfully.")
