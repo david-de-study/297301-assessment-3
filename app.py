@@ -7,7 +7,7 @@ import time
 if 'baseline_forecast' not in st.session_state:
     st.session_state['baseline_forecast'] = 0
 
-if 'baseline_forecast' not in st.session_state:
+if 'ml_forecast' not in st.session_state:
     st.session_state['ml_forecast'] = 0
     
 st.set_page_config(page_title="Retail Inventory Prediction", layout="wide")
