@@ -81,24 +81,7 @@ lag_promo_1 = st.sidebar.number_input("Week 1 (Most Recent)", min_value=0, value
 lag_promo_2 = st.sidebar.number_input("Week 2", min_value=0, value=0, step=1, key="promo_2")
 lag_promo_3 = st.sidebar.number_input("Week 3", min_value=0, value=0, step=1, key="promo_3")
 
-col1, col2 = st.columns(2)
-
-# Baseline MAE
-# BASELINE_MAE = 543
-# col1.metric(
-#     label="Baseline Prediction (Using previous value)", 
-#     value=f"{int( st.session_state.baseline_forecast)} Units",
-#     delta="Naive reference method",
-#     delta_color="off"
-# )
-
-# Model MAE
-# MODEL_TEST_MAE = 794
-# col2.metric(
-#     label="ML Model Prediction", 
-#     value=f"{int(st.session_state.baseline_forecast)} Units",
-#     delta="Gradient Boosting"
-# )
+col1, col2, col3, col4 = st.columns(4)
 
 st.caption("""
 **Findings**: The naive previous-week baseline performs well on outlier values that don't fall within typical ranges. 
@@ -108,7 +91,7 @@ The ML model captures non-linear effects of promotions, transaction patterns, an
 st.divider()
 
 # Prediction and Comparison Section
-st.subheader("2. Next Week Forecast Comparison")
+# st.subheader("2. Next Week Forecast Comparison")
 
 if st.button("Generate Forecast", type="primary", key="forecast_btn"):
     if model is None or preprocessor is None:
@@ -163,16 +146,15 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
 
             col1.metric(
                 label="Baseline Prediction (Using previous value)", 
-                value=f"{int( st.session_state.baseline_forecast)} Units",
+                value=f"{int(st.session_state.baseline_forecast)} Units",
                 delta="Naive reference method",
                 delta_color="off"
             )
 
             col2.metric(
-                label="Baseline Prediction (Using previous value)", 
-                value=f"{int( st.session_state.ml_forecast)} Units",
-                delta="Naive reference method",
-                delta_color="off"
+                label="ML Prediction", 
+                value=f"{int(st.session_state.ml_forecast)} Units",
+                delta="Naive reference method"
             )
             
             # Chart Display
