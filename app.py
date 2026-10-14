@@ -159,7 +159,7 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
                 st.warning(f"Model prediction error, using fallback. Error: {str(e)[:80]}")
                 st.session_state['ml_forecast'] = lag_sales_1
             
-             st.session_state['baseline_forecast'] = lag_sales_1
+            st.session_state['baseline_forecast'] = lag_sales_1
             
             # Chart Display
             result_df = pd.DataFrame([
