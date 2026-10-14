@@ -154,7 +154,7 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
             col2.metric(
                 label="ML Prediction", 
                 value=f"{int(st.session_state.ml_forecast)} Units",
-                delta="Naive reference method"
+                delta="Gradient Boosting Method"
             )
             
             # Chart Display
