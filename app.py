@@ -4,11 +4,11 @@ import numpy as np
 import joblib
 import time
 
-if 'baseline_forecast' not in st.session_state:
-    st.session_state['baseline_forecast'] = 0
+# if 'baseline_forecast' not in st.session_state:
+#     st.session_state['baseline_forecast'] = 0
 
-if 'ml_forecast' not in st.session_state:
-    st.session_state['ml_forecast'] = 0
+# if 'ml_forecast' not in st.session_state:
+#     st.session_state['ml_forecast'] = 0
     
 st.set_page_config(page_title="Retail Inventory Prediction", layout="wide")
 st.title("Retail Inventory & Decision Support Dashboard")
@@ -135,30 +135,35 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
             try:
                 X_processed = preprocessor.transform(input_df)
                 ml_forecast = model.predict(X_processed)[0]
-                st.session_state['ml_forecast'] = max(0, ml_forecast)
+                # st.session_state['ml_forecast'] = max(0, ml_forecast)
+                ml_forecast = model.predict(X_processed)[0]
             except Exception as e:
                 st.warning(f"Model prediction error, using fallback. Error: {str(e)[:80]}")
                 # st.session_state['ml_forecast'] = lag_sales_1
+                # ml_forecast = lag_sales_1
             
-            st.session_state['baseline_forecast'] = lag_sales_1
+            # st.session_state['baseline_forecast'] = lag_sales_1
+            baseline_forecast = lag_sales_1
 
             col1.metric(
                 label="Baseline Prediction (Using previous value)", 
-                value=f"{int(st.session_state.baseline_forecast)} Units",
+                # value=f"{int(st.session_state.baseline_forecast)} Units",
+                value=f"{int(baseline_forecast)} Units",
                 delta="Naive reference method",
                 delta_color="off"
             )
 
             col2.metric(
                 label="ML Prediction", 
-                value=f"{int(st.session_state.ml_forecast)} Units",
+                # value=f"{int(st.session_state.ml_forecast)} Units",
+                value=f"{int(ml_forecast)} Units",
                 delta="Gradient Boosting Method"
             )
             
             # Chart Display
             result_df = pd.DataFrame([
-                {'Method': 'Baseline Prediction (Using previous value)', 'Forecast (Units)': int( st.session_state.baseline_forecast)},
-                {'Method': 'ML Prediction', 'Forecast (Units)': int( st.session_state.ml_forecast)}
+                {'Method': 'Baseline Prediction (Using previous value)', 'Forecast (Units)': int(baseline_forecast)},
+                {'Method': 'ML Prediction', 'Forecast (Units)': int(ml_forecast)}
             ])
             
             st.bar_chart(result_df, x='Method', y='Forecast (Units)')
@@ -167,7 +172,7 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
             st.success("✅ Forecast generated successfully.")
             
             st.info(f"🧠 **Decision Support Report**\n\n"
-                    f"- **Baseline Forecast**: **{int( st.session_state.baseline_forecast)} units** (naive previous-week projection)\n"
-                    f"- **ML Model Forecast**: **{int( st.session_state.ml_forecast)} units** (Gradient Boosting with lag features)\n\n"
+                    f"- **Baseline Forecast**: **{int(baseline_forecast)} units** (naive previous-week projection)\n"
+                    f"- **ML Model Forecast**: **{int(ml_forecast)} units** (Gradient Boosting with lag features)\n\n"
                     f"**Recommendation**: Use the ML model for routine replenishment. "
                     f"Reference the baseline model when planning around unusual transaction patterns or as a supplement.")
