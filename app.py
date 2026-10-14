@@ -7,6 +7,9 @@ import time
 st.set_page_config(page_title="Retail Inventory Prediction", layout="wide")
 st.title("Retail Inventory & Decision Support Dashboard")
 
+baseline_forecast = 0
+ml_forecast = 0
+
 # Load datasets from cache
 @st.cache_data 
 def load_data():
