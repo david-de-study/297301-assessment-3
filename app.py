@@ -154,7 +154,7 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
             try:
                 X_processed = preprocessor.transform(input_df)
                 ml_forecast = model.predict(X_processed)[0]
-                ml_forecast = max(0, ml_forecast)
+                st.session_state['ml_forecast'] = max(0, ml_forecast)
             except Exception as e:
                 st.warning(f"Model prediction error, using fallback. Error: {str(e)[:80]}")
                 # st.session_state['ml_forecast'] = lag_sales_1
