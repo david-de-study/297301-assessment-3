@@ -84,21 +84,21 @@ lag_promo_3 = st.sidebar.number_input("Week 3", min_value=0, value=0, step=1, ke
 col1, col2 = st.columns(2)
 
 # Baseline MAE
-BASELINE_MAE = 543
-col1.metric(
-    label="Baseline Prediction (Using previous value)", 
-    value=f"{int( st.session_state.baseline_forecast)} Units",
-    delta="Naive reference method",
-    delta_color="off"
-)
+# BASELINE_MAE = 543
+# col1.metric(
+#     label="Baseline Prediction (Using previous value)", 
+#     value=f"{int( st.session_state.baseline_forecast)} Units",
+#     delta="Naive reference method",
+#     delta_color="off"
+# )
 
 # Model MAE
-MODEL_TEST_MAE = 794
-col2.metric(
-    label="ML Model Prediction", 
-    value=f"{int(st.session_state.baseline_forecast)} Units",
-    delta="Gradient Boosting"
-)
+# MODEL_TEST_MAE = 794
+# col2.metric(
+#     label="ML Model Prediction", 
+#     value=f"{int(st.session_state.baseline_forecast)} Units",
+#     delta="Gradient Boosting"
+# )
 
 st.caption("""
 **Findings**: The naive previous-week baseline performs well on outlier values that don't fall within typical ranges. 
@@ -157,7 +157,7 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
                 ml_forecast = max(0, ml_forecast)
             except Exception as e:
                 st.warning(f"Model prediction error, using fallback. Error: {str(e)[:80]}")
-                st.session_state['ml_forecast'] = lag_sales_1
+                # st.session_state['ml_forecast'] = lag_sales_1
             
             st.session_state['baseline_forecast'] = lag_sales_1
 
@@ -170,7 +170,7 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
 
             col2.metric(
                 label="Baseline Prediction (Using previous value)", 
-                value=f"{int( st.session_state.baseline_forecast)} Units",
+                value=f"{int( st.session_state.ml_forecast)} Units",
                 delta="Naive reference method",
                 delta_color="off"
             )
@@ -178,7 +178,7 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
             # Chart Display
             result_df = pd.DataFrame([
                 {'Method': 'Baseline (Previous Week)', 'Forecast (Units)': int( st.session_state.baseline_forecast)},
-                {'Method': 'ML Model (Gradient Boosting)', 'Forecast (Units)': int( st.session_state.baseline_forecast)}
+                {'Method': 'ML Model (Gradient Boosting)', 'Forecast (Units)': int( st.session_state.ml_forecast)}
             ])
             
             st.bar_chart(result_df, x='Method', y='Forecast (Units)')
@@ -188,6 +188,6 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
             
             st.info(f"🧠 **Decision Support Report**\n\n"
                     f"- **Baseline Forecast**: **{int( st.session_state.baseline_forecast)} units** (naive previous-week projection)\n"
-                    f"- **ML Model Forecast**: **{int( st.session_state.baseline_forecast)} units** (Gradient Boosting with lag features & seasonality)\n\n"
+                    f"- **ML Model Forecast**: **{int( st.session_state.ml_forecast)} units** (Gradient Boosting with lag features & seasonality)\n\n"
                     f"**Recommendation**: Use the baseline for routine replenishment. "
                     f"Reference the ML model when planning around promotions, seasonal shifts, or unusual transaction patterns.")
