@@ -81,7 +81,7 @@ lag_promo_1 = st.sidebar.number_input("Week 1 (Most Recent)", min_value=0, value
 lag_promo_2 = st.sidebar.number_input("Week 2", min_value=0, value=0, step=1, key="promo_2")
 lag_promo_3 = st.sidebar.number_input("Week 3", min_value=0, value=0, step=1, key="promo_3")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2)
 
 # Baseline MAE
 BASELINE_MAE = 543
@@ -160,6 +160,20 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
                 st.session_state['ml_forecast'] = lag_sales_1
             
             st.session_state['baseline_forecast'] = lag_sales_1
+
+            col1.metric(
+                label="Baseline Prediction (Using previous value)", 
+                value=f"{int( st.session_state.baseline_forecast)} Units",
+                delta="Naive reference method",
+                delta_color="off"
+            )
+
+            col2.metric(
+                label="Baseline Prediction (Using previous value)", 
+                value=f"{int( st.session_state.baseline_forecast)} Units",
+                delta="Naive reference method",
+                delta_color="off"
+            )
             
             # Chart Display
             result_df = pd.DataFrame([
