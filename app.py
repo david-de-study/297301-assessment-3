@@ -51,7 +51,6 @@ st.sidebar.divider()
 st.sidebar.subheader("Reference Week")
 selected_date = st.sidebar.date_input(
     "Previous Week Date",
-    value=df['date'].max(),
     key="ref_week_date"
 )
 
