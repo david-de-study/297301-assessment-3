@@ -159,17 +159,18 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
             
             # Chart Display
             result_df = pd.DataFrame([
-                {'Method': 'Baseline (Previous Week)', 'Forecast (Units)': int( st.session_state.baseline_forecast)},
-                {'Method': 'ML Model (Gradient Boosting)', 'Forecast (Units)': int( st.session_state.ml_forecast)}
+                {'Method': 'Baseline Prediction (Using previous value)', 'Forecast (Units)': int( st.session_state.baseline_forecast)},
+                {'Method': 'ML Prediction', 'Forecast (Units)': int( st.session_state.ml_forecast)}
             ])
             
-            st.bar_chart(result_df, x='Method', y='Forecast (Units)')
+            graph = st.bar_chart(result_df, x='Method', y='Forecast (Units)')
+            graph.update_layout(xaxis = dict(tickangle = 90))
             
             # Business Analysis
             st.success("✅ Forecast generated successfully.")
             
             st.info(f"🧠 **Decision Support Report**\n\n"
                     f"- **Baseline Forecast**: **{int( st.session_state.baseline_forecast)} units** (naive previous-week projection)\n"
-                    f"- **ML Model Forecast**: **{int( st.session_state.ml_forecast)} units** (Gradient Boosting with lag features & seasonality)\n\n"
-                    f"**Recommendation**: Use the baseline for routine replenishment. "
-                    f"Reference the ML model when planning around promotions, seasonal shifts, or unusual transaction patterns.")
+                    f"- **ML Model Forecast**: **{int( st.session_state.ml_forecast)} units** (Gradient Boosting with lag features)\n\n"
+                    f"**Recommendation**: Use the ML model for routine replenishment. "
+                    f"Reference the baseline model when planning around unusual transaction patterns or as a supplement.")
