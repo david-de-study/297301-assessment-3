@@ -75,42 +75,27 @@ lag_promo_1 = st.sidebar.number_input("Week 1 (Most Recent)", min_value=0, value
 lag_promo_2 = st.sidebar.number_input("Week 2", min_value=0, value=0, step=1, key="promo_2")
 lag_promo_3 = st.sidebar.number_input("Week 3", min_value=0, value=0, step=1, key="promo_3")
 
-st.sidebar.caption("💡 Rolling averages are calculated automatically from the inputs above.")
-
-# Top indicator panel
-st.subheader("1. Model Performance Benchmark (Test Set)")
-
 col1, col2, col3, col4 = st.columns(4)
 
 # Baseline MAE
 BASELINE_MAE = 543
 col1.metric(
-    label="Baseline MAE (Previous Week)", 
+    label="Baseline Prediction (Simply using previous weekly value)", 
     value=f"{BASELINE_MAE} Units",
-    delta="Naive reference method"
+    delta="Naive reference method",
+    delta_color="off"
 )
 
 # Model MAE
 MODEL_TEST_MAE = 794
 col2.metric(
-    label="ML Model MAE (Test Set)", 
+    label="ML Model Prediction", 
     value=f"{MODEL_TEST_MAE} Units",
-    delta="Gradient Boosting",
-    delta_color="off"
-)
-
-col3.metric(
-    label="Most Recent Weekly Sales", 
-    value=f"{int(lag_sales_1)} Units"
-)
-
-col4.metric(
-    label="Most Recent Transactions",
-    value=f"{int(lag_trans_1)}"
+    delta="Gradient Boosting"
 )
 
 st.caption("""
-**Findings**: The naive previous-week baseline performs well on steady-state demand. 
+**Findings**: The naive previous-week baseline performs well on outlier values that don't fall within typical ranges. 
 The ML model captures non-linear effects of promotions, transaction patterns, and seasonality for scenario planning.
 """)
 
