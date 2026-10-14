@@ -87,7 +87,7 @@ col1, col2, col3, col4 = st.columns(4)
 BASELINE_MAE = 543
 col1.metric(
     label="Baseline Prediction (Using previous value)", 
-    value=f"{int( st.session_state['baseline_forecast'])} Units",
+    value=f"{int( st.session_state.baseline_forecast)} Units",
     delta="Naive reference method",
     delta_color="off"
 )
@@ -96,7 +96,7 @@ col1.metric(
 MODEL_TEST_MAE = 794
 col2.metric(
     label="ML Model Prediction", 
-    value=f"{int( st.session_state['ml_forecast'])} Units",
+    value=f"{int( st.session_state.ml_forecast)} Units",
     delta="Gradient Boosting"
 )
 
@@ -163,8 +163,8 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
             
             # Chart Display
             result_df = pd.DataFrame([
-                {'Method': 'Baseline (Previous Week)', 'Forecast (Units)': int( st.session_state['baseline_forecast'])},
-                {'Method': 'ML Model (Gradient Boosting)', 'Forecast (Units)': int( st.session_state['ml_forecast'])}
+                {'Method': 'Baseline (Previous Week)', 'Forecast (Units)': int( st.session_state.baseline_forecast)},
+                {'Method': 'ML Model (Gradient Boosting)', 'Forecast (Units)': int( st.session_state.ml_forecast)}
             ])
             
             st.bar_chart(result_df, x='Method', y='Forecast (Units)')
