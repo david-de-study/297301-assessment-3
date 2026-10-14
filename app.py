@@ -157,7 +157,7 @@ if st.button("Generate Forecast", type="primary", key="forecast_btn"):
                 ml_forecast = max(0, ml_forecast)
             except Exception as e:
                 st.warning(f"Model prediction error, using fallback. Error: {str(e)[:80]}")
-                 st.session_state['ml_forecast'] = lag_sales_1
+                st.session_state['ml_forecast'] = lag_sales_1
             
              st.session_state['baseline_forecast'] = lag_sales_1
             
