@@ -85,7 +85,8 @@ col1, col2, col3, col4 = st.columns(4)
 
 st.caption("""
 **Findings**: The naive previous-week baseline performs well on outlier values that don't fall within typical ranges. 
-The ML model captures non-linear effects of promotions, transaction patterns, and seasonality for scenario planning.
+The ML model captures non-linear effects of promotions, transaction patterns for scenario planning.
+
 """)
 
 st.divider()
