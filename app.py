@@ -7,24 +7,12 @@ import time
 st.set_page_config(page_title="Retail Inventory Prediction", layout="wide")
 st.title("Retail Inventory & Decision Support Dashboard")
 
-# AWS Deployment Architecture
-with st.expander("AWS Cloud Deployment Architecture", expanded=False):
-    st.markdown("""
-    **Production Deployment Pipeline:**
-    1. **Model Training**: Gradient Boosting model trained and validated in notebook, serialized with `joblib`
-    2. **Artifact Storage**: Model and preprocessor artifacts stored in **Amazon S3** for version control
-    3. **Model Serving**: Deployed as a REST endpoint via **Amazon SageMaker** real-time inference
-    4. **Application Layer**: Streamlit dashboard calls the endpoint via **AWS boto3 API** to retrieve forecasts
-    5. **Fallback Mechanism**: Local cached model for offline development and endpoint failure fallback
-    """)
-
 # Load datasets from cache
 @st.cache_data 
 def load_data():
     df = pd.read_csv("cleaned_dataset.csv")
     if 'date' in df.columns:
         df['date'] = pd.to_datetime(df['date'])
-        df = df.sort_values('date') 
     return df
 
 # Cache loading model and preprocessor
@@ -38,45 +26,59 @@ def load_ml_components():
         st.error(f"⚠️ Failed to load model files. Ensure model.joblib and preprocessor.joblib are in the same directory.\nError: {e}")
         return None, None
 
-# AWS
-def invoke_sagemaker_endpoint(input_df):
-    time.sleep(0.4)
-    model, preprocessor = load_ml_components()
-    if model is None or preprocessor is None:
-        raise Exception("Model artifacts unavailable")
-    processed = preprocessor.transform(input_df)
-    prediction = model.predict(processed)[0]
-    return max(0, prediction)
-
 df = load_data()
 model, preprocessor = load_ml_components()
 
-# Sidebar Control Panel
+# Sidebar input boxes
 st.sidebar.header("Control Panel")
 
-selected_store = st.sidebar.selectbox("Select Store", sorted(df['store_nbr'].unique()))
-store_df = df[df['store_nbr'] == selected_store]
-
-selected_family = st.sidebar.selectbox("Select Product Category", sorted(store_df['family'].unique()))
-filtered_df = store_df[store_df['family'] == selected_family].copy()
-
-if filtered_df.empty:
-    st.warning("No data available for this store + category combination.")
-    st.stop()
+# Product Category
+selected_family = st.sidebar.selectbox(
+    "Product Category", 
+    sorted(df['family'].unique()),
+    key="product_category"
+)
 
 st.sidebar.divider()
-st.sidebar.subheader("Scenario Simulator")
-st.sidebar.write("Adjust parameters for what-if analysis:")
 
-sim_weather = st.sidebar.selectbox(
-    "Expected Weather Next Week", 
-    ["☀️ Normal / Clear", "🌧️ Heavy Rain (Reduced Foot Traffic)", "🔥 Extreme Heat (Beverage Spike)"]
+# Previous Week Date
+st.sidebar.subheader("Reference Week")
+selected_date = st.sidebar.date_input(
+    "Previous Week Date",
+    value=df['date'].max(),
+    min_value=df['date'].min(),
+    max_value=df['date'].max(),
+    key="ref_week_date"
 )
-sim_promo = st.sidebar.slider("Expected Promotion Uplift (%)", min_value=0, max_value=50, value=0, step=10)
-st.sidebar.caption("💡 Weather & promo are business-rule adjustments applied on top of the base forecast.")
+
+st.sidebar.divider()
+
+# Lagged Sales
+st.sidebar.subheader("Lagged Sales (Units)")
+lag_sales_1 = st.sidebar.number_input("Week 1 (Most Recent)", min_value=0, value=0, step=1, key="sales_1")
+lag_sales_2 = st.sidebar.number_input("Week 2", min_value=0, value=0, step=1, key="sales_2")
+lag_sales_3 = st.sidebar.number_input("Week 3", min_value=0, value=0, step=1, key="sales_3")
+
+st.sidebar.divider()
+
+# Lagged Transactions
+st.sidebar.subheader("Lagged Transactions")
+lag_trans_1 = st.sidebar.number_input("Week 1 (Most Recent)", min_value=0, value=0, step=1, key="trans_1")
+lag_trans_2 = st.sidebar.number_input("Week 2", min_value=0, value=0, step=1, key="trans_2")
+lag_trans_3 = st.sidebar.number_input("Week 3", min_value=0, value=0, step=1, key="trans_3")
+
+st.sidebar.divider()
+
+# On Promotion Count
+st.sidebar.subheader("On Promotion Count")
+lag_promo_1 = st.sidebar.number_input("Week 1 (Most Recent)", min_value=0, value=0, step=1, key="promo_1")
+lag_promo_2 = st.sidebar.number_input("Week 2", min_value=0, value=0, step=1, key="promo_2")
+lag_promo_3 = st.sidebar.number_input("Week 3", min_value=0, value=0, step=1, key="promo_3")
+
+st.sidebar.caption("💡 Rolling averages are calculated automatically from the inputs above.")
 
 # Top indicator panel
-st.subheader("1. Performance Benchmark (Test Set)")
+st.subheader("1. Model Performance Benchmark (Test Set)")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -85,7 +87,7 @@ BASELINE_MAE = 543
 col1.metric(
     label="Baseline MAE (Previous Week)", 
     value=f"{BASELINE_MAE} Units",
-    delta="Industry standard naive method"
+    delta="Naive reference method"
 )
 
 # Model MAE
@@ -94,109 +96,93 @@ col2.metric(
     label="ML Model MAE (Test Set)", 
     value=f"{MODEL_TEST_MAE} Units",
     delta="Gradient Boosting",
-    delta_color="off" 
+    delta_color="off"
 )
 
-avg_weekly_sales = filtered_df['unit_sales'].mean()
 col3.metric(
-    label="Avg Weekly Sales", 
-    value=f"{avg_weekly_sales:.0f} Units"
+    label="Most Recent Weekly Sales", 
+    value=f"{int(lag_sales_1)} Units"
 )
 
-avg_transactions = filtered_df['transactions'].mean()
 col4.metric(
-    label="Avg Weekly Transactions",
-    value=f"{avg_transactions:.0f}"
+    label="Most Recent Transactions",
+    value=f"{int(lag_trans_1)}"
 )
 
 st.caption("""
-**Findings**: The naive previous-week baseline achieves lower MAE on steady-state sales. 
-The ML model adds value for scenario planning, seasonal shifts, and what-if analysis by capturing non-linear relationships between promotions, transactions, and calendar effects.
+**Findings**: The naive previous-week baseline performs well on steady-state demand. 
+The ML model captures non-linear effects of promotions, transaction patterns, and seasonality for scenario planning.
 """)
 
 st.divider()
 
 # Prediction and Comparison Section
-st.subheader("2. Weekly Forecast Comparison: Baseline vs ML Model")
+st.subheader("2. Next Week Forecast Comparison")
 
-if st.button("Run Forecast via Cloud Endpoint", type="primary"):
+if st.button("Generate Forecast", type="primary", key="forecast_btn"):
     if model is None or preprocessor is None:
         st.error("Model not loaded. Cannot run prediction.")
     else:
-        with st.spinner('Calling SageMaker endpoint for inference...'):
+        with st.spinner('Running Gradient Boosting model inference...'):
+            time.sleep(0.5)
             
-            latest_record = filtered_df.sort_values('date').iloc[-1:].copy()
-            latest_record['month'] = latest_record['date'].dt.month
-            latest_record['week_of_year'] = latest_record['date'].dt.isocalendar().week.astype(int)
+            sales_2avg = (lag_sales_1 + lag_sales_2) / 2
+            trans_2avg = (lag_trans_1 + lag_trans_2) / 2
+            sales_3avg = (lag_sales_1 + lag_sales_2 + lag_sales_3) / 3
+            trans_3avg = (lag_trans_1 + lag_trans_2 + lag_trans_3) / 3
+            sales_4avg = (lag_sales_1 + lag_sales_2 + lag_sales_3 + lag_sales_3) / 4
+            trans_4avg = (lag_trans_1 + lag_trans_2 + lag_trans_3 + lag_trans_3) / 4
             
-            feature_columns = [
-                'store_nbr', 'family',
-                'previous_transactions_1', 'previous_unit_sales_1', 'previous_onpromotion_1',
-                'previous_transactions_2', 'previous_unit_sales_2', 'previous_onpromotion_2',
-                'previous_transactions_3', 'previous_unit_sales_3', 'previous_onpromotion_3',
-                'previous_transactions_4_avg', 'previous_unit_sales_4_avg',
-                'previous_transactions_3_avg', 'previous_unit_sales_3_avg',
-                'previous_transactions_2_avg', 'previous_unit_sales_2_avg',
-                'month', 'week_of_year'
-            ]
+            month = selected_date.month
+            week_of_year = selected_date.isocalendar()[1]
+            
+            feature_data = {
+                'store_nbr': 1,
+                'family': selected_family,
+                'previous_transactions_1': lag_trans_1,
+                'previous_unit_sales_1': lag_sales_1,
+                'previous_onpromotion_1': lag_promo_1,
+                'previous_transactions_2': lag_trans_2,
+                'previous_unit_sales_2': lag_sales_2,
+                'previous_onpromotion_2': lag_promo_2,
+                'previous_transactions_3': lag_trans_3,
+                'previous_unit_sales_3': lag_sales_3,
+                'previous_onpromotion_3': lag_promo_3,
+                'previous_transactions_4_avg': trans_4avg,
+                'previous_unit_sales_4_avg': sales_4avg,
+                'previous_transactions_3_avg': trans_3avg,
+                'previous_unit_sales_3_avg': sales_3avg,
+                'previous_transactions_2_avg': trans_2avg,
+                'previous_unit_sales_2_avg': sales_2avg,
+                'month': month,
+                'week_of_year': week_of_year
+            }
+            
+            input_df = pd.DataFrame([feature_data])
             
             try:
-                X_input = latest_record[feature_columns]
-                # Calling AWS endpoints
-                ml_base_forecast = invoke_sagemaker_endpoint(X_input)
-                
+                X_processed = preprocessor.transform(input_df)
+                ml_forecast = model.predict(X_processed)[0]
+                ml_forecast = max(0, ml_forecast)
             except Exception as e:
-                st.warning(f"Endpoint call failed, using historical fallback. Error: {str(e)[:80]}")
-                ml_base_forecast = filtered_df['unit_sales'].tail(4).mean()
-                ml_base_forecast = max(0, ml_base_forecast)
+                st.warning(f"Model prediction error, using fallback. Error: {str(e)[:80]}")
+                ml_forecast = lag_sales_1
             
-            baseline_forecast = latest_record['previous_unit_sales_1'].values[0]
+            baseline_forecast = lag_sales_1
             
-            # Scenario simulation multiplier
-            multiplier = 1.0 + (sim_promo / 100.0)
-            family_lower = selected_family.lower()
-            
-            if "beverage" in family_lower or "drink" in family_lower or "grocery" in family_lower:
-                rain_mult, heat_mult = 0.8, 1.3
-            elif "bread" in family_lower or "bakery" in family_lower or "dairy" in family_lower:
-                rain_mult, heat_mult = 0.85, 1.05
-            elif "liquor" in family_lower or "wine" in family_lower or "beer" in family_lower:
-                rain_mult, heat_mult = 0.9, 1.25
-            elif "home" in family_lower or "hardware" in family_lower or "garden" in family_lower:
-                rain_mult, heat_mult = 0.95, 1.05
-            else:
-                rain_mult, heat_mult = 0.85, 1.15
-
-            if "Rain" in sim_weather: 
-                multiplier *= rain_mult
-            elif "Heat" in sim_weather: 
-                multiplier *= heat_mult
-            
-            ml_adjusted = int(ml_base_forecast * multiplier)
-            baseline_adjusted = int(baseline_forecast * multiplier)
-            
-            # Charts: Historical + Forecast
-            history_weeks = filtered_df.sort_values('date').tail(8)[['date', 'unit_sales']].copy()
-            history_weeks['type'] = 'Actual Sales'
-            
-            next_week_date = filtered_df['date'].max() + pd.Timedelta(weeks=1)
-            
-            forecast_df = pd.DataFrame([
-                {'date': next_week_date, 'unit_sales': baseline_adjusted, 'type': 'Baseline Forecast'},
-                {'date': next_week_date, 'unit_sales': ml_adjusted, 'type': 'ML Model Forecast'}
+            # Chart Display
+            result_df = pd.DataFrame([
+                {'Method': 'Baseline (Previous Week)', 'Forecast (Units)': int(baseline_forecast)},
+                {'Method': 'ML Model (Gradient Boosting)', 'Forecast (Units)': int(ml_forecast)}
             ])
             
-            chart_df = pd.concat([history_weeks, forecast_df], ignore_index=True)
-            
-            # Use a bar chart for comparison.
-            st.bar_chart(chart_df, x='date', y='unit_sales', color='type')
+            st.bar_chart(result_df, x='Method', y='Forecast (Units)')
             
             # Business Analysis
-            st.success("Forecast complete. Both methods displayed for side-by-side comparison.")
+            st.success("✅ Forecast generated successfully.")
             
-            st.info(f" **Decision Support Report**\n\n"
-                    f"- **Baseline Forecast** (previous week method): **{baseline_adjusted} units** next week\n"
-                    f"- **ML Model Forecast** (Gradient Boosting): **{ml_adjusted} units** next week\n"
-                    f"- **Scenario Adjustments**: {sim_promo}% promotion uplift + {sim_weather.split(' ')[0]} weather factor applied to both\n\n"
-                    f"**Recommendation**: For routine replenishment, the baseline method remains robust and accurate. "
-                    f"Use the ML model and scenario simulator for planning around promotions, seasonal changes, and weather events.")
+            st.info(f"🧠 **Decision Support Report**\n\n"
+                    f"- **Baseline Forecast**: **{int(baseline_forecast)} units** (naive previous-week projection)\n"
+                    f"- **ML Model Forecast**: **{int(ml_forecast)} units** (Gradient Boosting with lag features & seasonality)\n\n"
+                    f"**Recommendation**: Use the baseline for routine replenishment. "
+                    f"Reference the ML model when planning around promotions, seasonal shifts, or unusual transaction patterns.")
