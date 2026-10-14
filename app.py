@@ -80,8 +80,8 @@ col1, col2, col3, col4 = st.columns(4)
 # Baseline MAE
 BASELINE_MAE = 543
 col1.metric(
-    label="Baseline Prediction (Simply using previous weekly value)", 
-    value=f"{BASELINE_MAE} Units",
+    label="Baseline Prediction (Using previous value)", 
+    value=f"{int(baseline_forecast)} Units",
     delta="Naive reference method",
     delta_color="off"
 )
@@ -90,7 +90,7 @@ col1.metric(
 MODEL_TEST_MAE = 794
 col2.metric(
     label="ML Model Prediction", 
-    value=f"{MODEL_TEST_MAE} Units",
+    value=f"{int(ml_forecast)} Units",
     delta="Gradient Boosting"
 )
 
